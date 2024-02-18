@@ -1,8 +1,20 @@
+import json
 import pandas as pd
 
 def export_to_excel(input_filename: str, output_filename: str):
-    result = pd.read_json(input_filename)
+    with open(input_filename) as json_file:
+        data = json.load(json_file)
+        
+    df = pd.json_normalize(data, record_path=['products'], meta=['title', 'item_count'])
     
-    flat_data = pd.json_normalize(result['products'])
+    def create_human_readable_summary(groups):
+        summary = []
+        for group in groups:
+            group_title = group['title']
+            specs_summary = '; '.join([f"{spec['title']}: {spec['value']}" for spec in group['specs']])
+            summary.append(f"{group_title} - {specs_summary}")
+        return '\n'.join(summary)
+    
+    df['extra_groups_summary'] = df.apply(lambda row: create_human_readable_summary(row['extra.groups']), axis=1)
 
-    flat_data.to_excel(output_filename, index=False, engine='openpyxl')
+    df.to_excel(output_filename, index=True, engine='openpyxl')

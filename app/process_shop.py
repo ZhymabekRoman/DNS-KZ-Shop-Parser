@@ -177,7 +177,7 @@ async def main():
         logger.debug(f"Pages in this category: {max_page}")
 
         tasks = []
-        for page_number in range(1, 2):
+        for page_number in range(1, 2 + 1):  # for test get only 2 page
         # for page_number in range(1, int(max_page) + 1):
             params = {'page': page_number}
             full_url = urljoin(link.strip(), '?' + urlencode(params))
@@ -190,15 +190,16 @@ async def main():
         result = []
         for link_content in pages_content:
             catalog_result = parse_catalog(link_content)
+
             for product_i, product in enumerate(catalog_result["products"]):
                 product_content = await get_page(browser, urljoin(URL_PREFIX, f"{product['link']}characteristics/"))
                 product_result = parse_product(product_content)
                 catalog_result["products"][product_i]["extra"] = product_result
-                # logger.debug(product_result)
+
             result.append(catalog_result)
         
             with open("catalog_result.json", "w") as file:
-                json.dump(catalog_result, file, indent=4, ensure_ascii=False)
+                json.dump(result, file, indent=4, ensure_ascii=False)
         
             export_to_excel("catalog_result.json", "exported_data.xlsx")
         
